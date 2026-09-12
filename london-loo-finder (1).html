@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nearest loo — London</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1B2A38;
+    --ink-soft:#2C3F4F;
+    --cream:#F3ECDD;
+    --paper:#FFFDF8;
+    --brick:#A63D2F;
+    --sage:#4B6357;
+    --stone:#8C8677;
+    --line: rgba(27,42,56,0.14);
+  }
+
+  *{box-sizing:border-box;}
+
+  html,body{
+    margin:0;
+    padding:0;
+    background:var(--cream);
+    color:var(--ink);
+    font-family:'Archivo', system-ui, sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  body{
+    display:flex;
+    justify-content:center;
+    min-height:100vh;
+    padding:0 0 40px;
+  }
+
+  .app{
+    width:100%;
+    max-width:480px;
+    background:var(--paper);
+    min-height:100vh;
+    box-shadow: 0 0 0 1px var(--line);
+  }
+
+  /* --- Hero / enamel plaque header --- */
+  .hero{
+    position:relative;
+    background:var(--ink);
+    color:var(--cream);
+    padding:34px 24px 28px;
+    overflow:hidden;
+    border-bottom:6px solid var(--brick);
+  }
+
+  .hero svg.compass{
+    position:absolute;
+    right:-38px;
+    top:-38px;
+    width:170px;
+    height:170px;
+    opacity:0.10;
+  }
+
+  .eyebrow-row{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-size:13px;
+    letter-spacing:0.02em;
+    color:var(--stone);
+    margin-bottom:10px;
+  }
+
+  .eyebrow-row .dot{
+    width:6px;height:6px;border-radius:50%;
+    background:var(--stone);
+    flex-shrink:0;
+  }
+
+  .eyebrow-row .dot.live{ background:#7FA98C; }
+
+  h1{
+    font-size:34px;
+    font-weight:800;
+    letter-spacing:-0.01em;
+    margin:0 0 6px;
+    line-height:1.05;
+  }
+
+  .hero p.sub{
+    margin:0;
+    font-size:15px;
+    color:#C9CFD6;
+    max-width:34ch;
+    line-height:1.4;
+  }
+
+  /* --- Location bar --- */
+  .locate-bar{
+    padding:16px 24px;
+    border-bottom:1px solid var(--line);
+    background:var(--paper);
+  }
+
+  .locate-bar .locate-label{
+    font-size:12px;
+    color:var(--stone);
+    margin-bottom:9px;
+  }
+
+  .locate-row{ display:flex; gap:8px; }
+
+  select#areaSelect{
+    flex:1;
+    min-width:0;
+    font-family:inherit;
+    font-size:14px;
+    padding:10px 12px;
+    border:1px solid var(--line);
+    border-radius:2px;
+    background:var(--cream);
+    color:var(--ink);
+  }
+
+  select#areaSelect:focus-visible{ outline:2px solid var(--brick); outline-offset:1px; }
+
+  button.btn-secondary{
+    font-family:inherit;
+    font-size:13.5px;
+    font-weight:600;
+    white-space:nowrap;
+    color:var(--paper);
+    background:var(--ink);
+    border:none;
+    padding:10px 14px;
+    border-radius:2px;
+    cursor:pointer;
+  }
+
+  button.btn-secondary:hover{ background:var(--ink-soft); }
+  button.btn-secondary:focus-visible{ outline:2px solid var(--brick); outline-offset:2px; }
+
+  .locate-divider{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin:12px 0;
+    font-size:11.5px;
+    color:var(--stone);
+  }
+
+  .locate-divider::before, .locate-divider::after{
+    content:'';
+    flex:1;
+    height:1px;
+    background:var(--line);
+  }
+
+  button.btn-gps{
+    width:100%;
+    font-family:inherit;
+    font-size:13.5px;
+    font-weight:600;
+    color:var(--ink);
+    background:transparent;
+    border:1px solid var(--ink);
+    padding:10px 14px;
+    border-radius:2px;
+    cursor:pointer;
+    transition:background 0.15s ease, color 0.15s ease;
+  }
+
+  button.btn-gps:hover{ background:var(--ink); color:var(--cream); }
+  button.btn-gps:focus-visible{ outline:2px solid var(--brick); outline-offset:2px; }
+
+  .locate-msg{
+    font-size:12.5px;
+    color:var(--brick);
+    margin-top:9px;
+    line-height:1.5;
+  }
+
+  /* --- Controls --- */
+  .controls{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:14px 24px;
+    border-bottom:1px solid var(--line);
+    gap:12px;
+  }
+
+  .controls .count{ font-size:13px; color:var(--stone); }
+  .controls .count strong{ color:var(--ink); font-weight:700; }
+
+  /* --- States --- */
+  .state-panel{ padding:40px 24px; text-align:left; }
+
+  .state-panel p{
+    font-size:14px;
+    color:var(--stone);
+    line-height:1.55;
+    margin:0 0 6px;
+    max-width:40ch;
+  }
+
+  /* --- List --- */
+  ul.results{ list-style:none; margin:0; padding:0; }
+
+  li.row{
+    display:flex;
+    align-items:flex-start;
+    gap:14px;
+    padding:16px 24px;
+    border-bottom:1px solid var(--line);
+    cursor:pointer;
+    transition:background 0.12s ease;
+  }
+
+  li.row:hover{ background:rgba(27,42,56,0.035); }
+  li.row:active{ background:rgba(27,42,56,0.06); }
+  li.row:focus-visible{ outline:2px solid var(--brick); outline-offset:-2px; }
+
+  li.row.closest:hover{ background:rgba(166,61,47,0.075); }
+  li.row.closest:active{ background:rgba(166,61,47,0.11); }
+
+  li.row.closest{
+    border-left:4px solid var(--brick);
+    background:rgba(166,61,47,0.045);
+    padding-left:20px;
+  }
+
+  .arrow-badge{
+    flex-shrink:0;
+    width:42px;
+    height:42px;
+    border-radius:50%;
+    background:var(--ink);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    margin-top:2px;
+  }
+
+  li.row.closest .arrow-badge{ background:var(--brick); }
+  .arrow-badge svg{ width:18px; height:18px; }
+
+  .row-main{ flex:1; min-width:0; }
+
+  .row-main .name{
+    font-size:15.5px;
+    font-weight:600;
+    color:var(--ink);
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+
+  .row-main .meta{
+    font-size:12.5px;
+    color:var(--stone);
+    margin-top:2px;
+  }
+
+  .row-figures{ text-align:right; flex-shrink:0; }
+
+  .row-figures .dist{
+    font-size:16px;
+    font-weight:800;
+    color:var(--ink);
+    font-variant-numeric:tabular-nums;
+  }
+
+  .row-figures .walk{
+    font-size:11.5px;
+    color:var(--stone);
+    margin-top:2px;
+  }
+
+  .row-figures .nav-hint{
+    font-size:10.5px;
+    color:var(--brick);
+    font-weight:600;
+    margin-top:5px;
+    display:flex;
+    align-items:center;
+    justify-content:flex-end;
+    gap:3px;
+  }
+
+  .row-figures .nav-hint svg{
+    width:10px;
+    height:10px;
+  }
+
+  /* --- Cleanliness rating --- */
+  .rating-block{
+    margin-top:10px;
+    padding-top:10px;
+    border-top:1px dashed var(--line);
+  }
+
+  .rating-avg{
+    font-size:12px;
+    color:var(--stone);
+    margin-bottom:6px;
+  }
+
+  .rating-avg strong{
+    color:var(--ink);
+    font-variant-numeric:tabular-nums;
+  }
+
+  .rating-avg .no-ratings{ font-style:italic; }
+
+  .rating-count{
+    font-weight:700;
+    color:var(--ink);
+  }
+
+  .stars{
+    display:inline-flex;
+    gap:3px;
+  }
+
+  .stars button{
+    background:none;
+    border:none;
+    padding:2px;
+    cursor:pointer;
+    line-height:0;
+  }
+
+  .stars button:focus-visible{ outline:2px solid var(--brick); outline-offset:1px; }
+
+  .stars svg{
+    width:18px;
+    height:18px;
+    stroke:var(--stone);
+    fill:none;
+    stroke-width:1.6;
+    transition:fill 0.12s ease, stroke 0.12s ease;
+  }
+
+  .stars button.filled svg,
+  .stars button:hover svg,
+  .stars button:hover ~ button svg{
+    fill:var(--brick);
+    stroke:var(--brick);
+  }
+
+  .stars.hover-active button svg{
+    fill:none;
+    stroke:var(--stone);
+  }
+
+  .stars.hover-active button.hovered svg,
+  .stars.hover-active button.hovered ~ button svg{
+    fill:none;
+  }
+
+  /* simpler, robust hover model handled via JS class toggling instead of CSS-only tricks */
+  .rating-thanks{
+    font-size:11.5px;
+    color:var(--sage);
+    margin-top:4px;
+  }
+
+  footer.note{
+    padding:18px 24px 30px;
+    font-size:11.5px;
+    color:var(--stone);
+    line-height:1.5;
+    border-top:1px solid var(--line);
+  }
+
+  footer.note a{ color:var(--ink); }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <div class="hero">
+    <svg class="compass" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="50" cy="50" r="46" stroke="currentColor" stroke-width="1.5"/>
+      <circle cx="50" cy="50" r="30" stroke="currentColor" stroke-width="1"/>
+      <path d="M50 4 L54 46 L50 50 L46 46 Z" fill="currentColor"/>
+      <line x1="50" y1="50" x2="50" y2="96" stroke="currentColor" stroke-width="1"/>
+      <line x1="4" y1="50" x2="96" y2="50" stroke="currentColor" stroke-width="1"/>
+    </svg>
+    <div class="eyebrow-row"><span class="dot" id="liveDot"></span><span id="statusText">Choose a location</span></div>
+    <h1>Nearest loo</h1>
+    <p class="sub">A hand-checked list of public toilets in central London, nearest to you first — rated by everyone who's used this.</p>
+  </div>
+
+  <div class="locate-bar">
+    <div class="locate-label">Where are you (or heading)?</div>
+    <div class="locate-row">
+      <select id="areaSelect">
+        <option value="">Pick an area…</option>
+      </select>
+      <button class="btn-secondary" id="goBtn">Go</button>
+    </div>
+    <div class="locate-divider">or</div>
+    <button class="btn-gps" id="gpsBtn">Try my current location</button>
+    <div class="locate-msg" id="locateMsg"></div>
+  </div>
+
+  <div class="controls" id="controlsBar" style="display:none;">
+    <span class="count"><strong id="resultCount">0</strong> listed near <span id="placeLabel">you</span></span>
+  </div>
+
+  <div id="content">
+    <div class="state-panel">
+      <p>Pick the area you're closest to from the list above, or try live location if your browser allows it.</p>
+    </div>
+  </div>
+
+  <footer class="note">
+    Entries marked "verified" were individually checked against <a href="https://www.toiletmap.org.uk/dataset" target="_blank" rel="noopener">Toilet Map</a> or an official council open-data file. Entries marked "unverified" (mainline stations, Royal Parks, a few landmarks) are general knowledge, not individually re-checked — treat those as a starting point rather than gospel. Not a live feed; opening hours and fees change. Cleanliness ratings are submitted by people using this tool and stored shared, visible to everyone who opens it — there's no login, so treat them as informal, crowd-sourced impressions rather than an audited score.
+  </footer>
+
+</div>
+
+<script>
+(function(){
+  // ---- Static data: no network calls, works fully offline ----
+
+  const AREAS = [
+    { name: "Trafalgar Square", lat: 51.5080, lon: -0.1281 },
+    { name: "Leicester Square", lat: 51.5103, lon: -0.1300 },
+    { name: "Covent Garden", lat: 51.5117, lon: -0.1240 },
+    { name: "Piccadilly Circus", lat: 51.5100, lon: -0.1337 },
+    { name: "Oxford Circus", lat: 51.5152, lon: -0.1418 },
+    { name: "King's Cross / St Pancras", lat: 51.5308, lon: -0.1238 },
+    { name: "Euston", lat: 51.5282, lon: -0.1337 },
+    { name: "Camden Town", lat: 51.5390, lon: -0.1426 },
+    { name: "Angel, Islington", lat: 51.5322, lon: -0.1058 },
+    { name: "Shoreditch / Liverpool St", lat: 51.5178, lon: -0.0823 },
+    { name: "Tower Bridge / Tower Hill", lat: 51.5081, lon: -0.0759 },
+    { name: "Borough Market / London Bridge", lat: 51.5055, lon: -0.0895 },
+    { name: "South Bank / Waterloo", lat: 51.5045, lon: -0.1145 },
+    { name: "Victoria", lat: 51.4965, lon: -0.1447 },
+    { name: "Paddington", lat: 51.5154, lon: -0.1755 },
+    { name: "Notting Hill Gate", lat: 51.5094, lon: -0.1967 },
+    { name: "Hyde Park Corner", lat: 51.5027, lon: -0.1527 },
+    { name: "Regent's Park", lat: 51.5313, lon: -0.1570 },
+    { name: "Greenwich", lat: 51.4826, lon: -0.0077 },
+    { name: "Hampstead Heath", lat: 51.5607, lon: -0.1629 },
+    { name: "Brixton", lat: 51.4613, lon: -0.1156 }
+  ];
+
+  // Verified = individually checked against toiletmap.org.uk or an official council
+  // open-data file this session. Unverified = general knowledge, not individually re-checked.
+  const TOILETS = [
+    { id: "kings-cross-station", name: "King's Cross station concourse", type: "Station · usually a small fee · unverified", lat: 51.5308, lon: -0.1238 },
+    { id: "pancras-square", name: "5 Pancras Square (Leisure Centre & Library)", type: "Camden Council · free · verified", lat: 51.533826, lon: -0.126383 },
+    { id: "st-pancras", name: "St Pancras International", type: "Station · usually a small fee · unverified", lat: 51.5322, lon: -0.1263 },
+    { id: "euston-station", name: "Euston station", type: "Station · usually a small fee · unverified", lat: 51.5282, lon: -0.1337 },
+    { id: "liverpool-st-station", name: "Liverpool Street station", type: "Station · usually a small fee · unverified", lat: 51.5178, lon: -0.0823 },
+    { id: "victoria-station", name: "Victoria station", type: "Station · usually a small fee · unverified", lat: 51.4952, lon: -0.1441 },
+    { id: "paddington-station", name: "Paddington station", type: "Station · usually a small fee · unverified", lat: 51.5154, lon: -0.1755 },
+    { id: "waterloo-station", name: "Waterloo station", type: "Station · usually a small fee · unverified", lat: 51.5031, lon: -0.1132 },
+    { id: "london-bridge-station", name: "London Bridge station", type: "Station · usually a small fee · unverified", lat: 51.5051, lon: -0.0865 },
+    { id: "trafalgar-square", name: "Trafalgar Square (south side)", type: "Council-run · 20p · verified", lat: 51.508114, lon: -0.128467 },
+    { id: "leicester-square", name: "Leicester Square", type: "Council-run · free · verified", lat: 51.510554, lon: -0.130554 },
+    { id: "piccadilly-circus", name: "Piccadilly Circus underground station", type: "Reopened Mar 2026 · £1 · verified", lat: 51.509981, lon: -0.134427 },
+    { id: "covent-garden-2theloo", name: "2theloo, Covent Garden", type: "Paid kiosk · £1.50 · verified", lat: 51.511964, lon: -0.122488 },
+    { id: "british-museum", name: "British Museum", type: "Free entry, toilets inside Great Court · verified", lat: 51.5194, lon: -0.1270 },
+    { id: "tate-modern", name: "Tate Modern", type: "Free entry, toilets inside · unverified", lat: 51.5076, lon: -0.0994 },
+    { id: "southbank-centre", name: "Southbank Centre / Royal Festival Hall", type: "Free, publicly accessible · unverified", lat: 51.5055, lon: -0.1160 },
+    { id: "borough-market", name: "Borough Market", type: "Public toilet on site · unverified", lat: 51.5056, lon: -0.0908 },
+    { id: "tower-hill", name: "Tower Hill", type: "Council-run public toilet · unverified", lat: 51.5098, lon: -0.0767 },
+    { id: "hyde-park-serpentine", name: "Hyde Park — Serpentine Lido", type: "Royal Parks toilet · unverified", lat: 51.5040, lon: -0.1665 },
+    { id: "hyde-park-speakers-corner", name: "Hyde Park — Speakers' Corner", type: "Royal Parks toilet · unverified", lat: 51.5142, lon: -0.1614 },
+    { id: "green-park", name: "Green Park", type: "Royal Parks toilet · unverified", lat: 51.5049, lon: -0.1437 },
+    { id: "st-james-park", name: "St James's Park", type: "Royal Parks toilet · unverified", lat: 51.5033, lon: -0.1348 },
+    { id: "regents-park-boating-lake", name: "Regent's Park — Boating Lake", type: "Royal Parks toilet · unverified", lat: 51.5296, lon: -0.1539 },
+    { id: "camden-market", name: "Camden Market", type: "Free · verified via Camden Council data", lat: 51.541531, lon: -0.146005 },
+    { id: "greenwich-park", name: "Greenwich Park", type: "Royal Parks toilet, near the Observatory · unverified", lat: 51.4769, lon: -0.0005 },
+    { id: "hampstead-heath-highgate-rd", name: "Hampstead Heath (Highgate Road)", type: "Council-run · verified via Camden data", lat: 51.556578, lon: -0.158641 },
+    { id: "kenwood-house", name: "Kenwood House, Hampstead Heath", type: "Seasonal hours · verified via Camden data", lat: 51.57132, lon: -0.1676 }
+  ];
+
+  const RATINGS_KEY = "toilet-cleanliness-ratings";
+
+  const contentEl = document.getElementById('content');
+  const controlsBar = document.getElementById('controlsBar');
+  const resultCountEl = document.getElementById('resultCount');
+  const placeLabelEl = document.getElementById('placeLabel');
+  const statusText = document.getElementById('statusText');
+  const liveDot = document.getElementById('liveDot');
+  const areaSelect = document.getElementById('areaSelect');
+  const goBtn = document.getElementById('goBtn');
+  const gpsBtn = document.getElementById('gpsBtn');
+  const locateMsg = document.getElementById('locateMsg');
+
+  let ratingsCache = null; // { [toiletId]: { total, count } }
+  const submittedThisSession = new Set();
+
+  AREAS.forEach((a, i) => {
+    const opt = document.createElement('option');
+    opt.value = i;
+    opt.textContent = a.name;
+    areaSelect.appendChild(opt);
+  });
+
+  function haversine(lat1, lon1, lat2, lon2){
+    const R = 6371000;
+    const toRad = d => d * Math.PI / 180;
+    const dLat = toRad(lat2 - lat1);
+    const dLon = toRad(lon2 - lon1);
+    const a = Math.sin(dLat/2)**2 +
+              Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+              Math.sin(dLon/2)**2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  }
+
+  function bearing(lat1, lon1, lat2, lon2){
+    const toRad = d => d * Math.PI / 180;
+    const toDeg = r => r * 180 / Math.PI;
+    const y = Math.sin(toRad(lon2-lon1)) * Math.cos(toRad(lat2));
+    const x = Math.cos(toRad(lat1))*Math.sin(toRad(lat2)) -
+              Math.sin(toRad(lat1))*Math.cos(toRad(lat2))*Math.cos(toRad(lon2-lon1));
+    return (toDeg(Math.atan2(y, x)) + 360) % 360;
+  }
+
+  function formatDistance(m){
+    if (m < 1000) return Math.round(m / 10) * 10 + ' m';
+    return (m/1000).toFixed(1) + ' km';
+  }
+
+  function walkMinutes(m){
+    const mins = m / 83;
+    if (mins < 1) return '<1 min walk';
+    return Math.round(mins) + ' min walk';
+  }
+
+  function arrowSvg(){
+    return '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">' +
+      '<path d="M12 3 L12 19 M12 3 L6 9 M12 3 L18 9" stroke="#F3ECDD" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>' +
+    '</svg>';
+  }
+
+  function navArrowSvg(){
+    return '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">' +
+      '<path d="M5 12h13M13 6l6 6-6 6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>' +
+    '</svg>';
+  }
+
+  function starSvg(){
+    return '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">' +
+      '<path d="M12 3.5 L14.6 9.3 L21 10 L16.2 14.2 L17.6 20.5 L12 17.2 L6.4 20.5 L7.8 14.2 L3 10 L9.4 9.3 Z" stroke-linejoin="round"/>' +
+    '</svg>';
+  }
+
+  function escapeHtml(str){
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  // ---- Shared cleanliness ratings (persisted via artifact storage) ----
+
+  async function loadRatings(){
+    if (ratingsCache) return ratingsCache;
+    try{
+      const result = await window.storage.get(RATINGS_KEY, true);
+      ratingsCache = result && result.value ? JSON.parse(result.value) : {};
+    } catch(err){
+      ratingsCache = {};
+    }
+    return ratingsCache;
+  }
+
+  async function submitRating(toiletId, value){
+    const ratings = await loadRatings();
+    const current = ratings[toiletId] || { total: 0, count: 0 };
+    current.total += value;
+    current.count += 1;
+    ratings[toiletId] = current;
+    try{
+      await window.storage.set(RATINGS_KEY, JSON.stringify(ratings), true);
+      ratingsCache = ratings;
+      return true;
+    } catch(err){
+      return false;
+    }
+  }
+
+  function ratingAverageHtml(toiletId){
+    const r = ratingsCache && ratingsCache[toiletId];
+    if (!r || r.count === 0){
+      return '<div class="rating-avg no-ratings">No cleanliness ratings yet</div>';
+    }
+    const avg = (r.total / r.count).toFixed(1);
+    return '<div class="rating-avg"><strong>' + avg + '</strong> / 5 cleanliness &nbsp;<span class="rating-count">(' +
+      r.count + (r.count === 1 ? ' rating' : ' ratings') + ')</span></div>';
+  }
+
+  function starsHtml(toiletId, alreadyRated){
+    let html = '<div class="stars" data-toilet="' + toiletId + '">';
+    for (let i = 1; i <= 5; i++){
+      html += '<button type="button" class="star-btn" data-value="' + i + '" ' +
+        (alreadyRated ? 'disabled' : '') + ' aria-label="Rate ' + i + ' out of 5 for cleanliness">' + starSvg() + '</button>';
+    }
+    html += '</div>';
+    return html;
+  }
+
+  function attachRatingHandlers(){
+    document.querySelectorAll('.stars').forEach(starsEl => {
+      const toiletId = starsEl.dataset.toilet;
+      const buttons = [...starsEl.querySelectorAll('.star-btn')];
+
+      function paint(upTo){
+        buttons.forEach(b => {
+          b.classList.toggle('filled', parseInt(b.dataset.value, 10) <= upTo);
+        });
+      }
+
+      buttons.forEach(btn => {
+        btn.addEventListener('mouseenter', () => paint(parseInt(btn.dataset.value, 10)));
+        btn.addEventListener('mouseleave', () => paint(0));
+        btn.addEventListener('click', async () => {
+          if (submittedThisSession.has(toiletId)) return;
+          const value = parseInt(btn.dataset.value, 10);
+          buttons.forEach(b => b.disabled = true);
+          paint(value);
+          const ok = await submitRating(toiletId, value);
+          submittedThisSession.add(toiletId);
+          const wrap = starsEl.parentElement;
+          const avgEl = wrap.querySelector('.rating-avg');
+          if (avgEl) avgEl.outerHTML = ratingAverageHtml(toiletId);
+          const thanksEl = document.createElement('div');
+          thanksEl.className = 'rating-thanks';
+          thanksEl.textContent = ok ? 'Thanks — rating saved.' : "Couldn't save your rating just now.";
+          wrap.appendChild(thanksEl);
+        });
+      });
+    });
+  }
+
+  function directionsUrl(lat, lon){
+    return 'https://www.google.com/maps/dir/?api=1&destination=' + lat + ',' + lon + '&travelmode=walking';
+  }
+
+  function attachRowNavHandlers(){
+    document.querySelectorAll('li.row').forEach(row => {
+      const go = () => {
+        const lat = row.dataset.lat;
+        const lon = row.dataset.lon;
+        window.open(directionsUrl(lat, lon), '_blank', 'noopener');
+      };
+      row.addEventListener('click', (e) => {
+        if (e.target.closest('.rating-block')) return; // let star taps rate, not navigate
+        go();
+      });
+      row.addEventListener('keydown', (e) => {
+        if (e.target.closest('.rating-block')) return;
+        if (e.key === 'Enter' || e.key === ' '){
+          e.preventDefault();
+          go();
+        }
+      });
+    });
+  }
+
+  async function showResults(lat, lon, placeLabel){
+    await loadRatings();
+
+    const items = TOILETS.map(t => ({
+      id: t.id,
+      name: t.name,
+      type: t.type,
+      lat: t.lat,
+      lon: t.lon,
+      dist: haversine(lat, lon, t.lat, t.lon),
+      brg: bearing(lat, lon, t.lat, t.lon)
+    })).sort((a, b) => a.dist - b.dist);
+
+    statusText.textContent = 'Showing results';
+    liveDot.classList.add('live');
+    controlsBar.style.display = 'flex';
+    resultCountEl.textContent = items.length;
+    placeLabelEl.textContent = placeLabel;
+
+    const rows = items.map((item, i) => (
+      '<li class="row' + (i === 0 ? ' closest' : '') + '" tabindex="0" role="button" ' +
+        'data-lat="' + item.lat + '" data-lon="' + item.lon + '" ' +
+        'aria-label="Open walking directions to ' + escapeHtml(item.name) + '">' +
+        '<span class="arrow-badge"><span style="display:inline-flex; transform: rotate(' + item.brg + 'deg);">' + arrowSvg() + '</span></span>' +
+        '<div class="row-main">' +
+          '<div class="name">' + escapeHtml(item.name) + '</div>' +
+          '<div class="meta">' + escapeHtml(item.type) + '</div>' +
+          '<div class="rating-block">' +
+            ratingAverageHtml(item.id) +
+            starsHtml(item.id, submittedThisSession.has(item.id)) +
+          '</div>' +
+        '</div>' +
+        '<div class="row-figures">' +
+          '<div class="dist">' + formatDistance(item.dist) + '</div>' +
+          '<div class="walk">' + walkMinutes(item.dist) + '</div>' +
+          '<div class="nav-hint">Directions ' + navArrowSvg() + '</div>' +
+        '</div>' +
+      '</li>'
+    )).join('');
+
+    contentEl.innerHTML = '<ul class="results">' + rows + '</ul>';
+    attachRatingHandlers();
+    attachRowNavHandlers();
+  }
+
+  function useArea(){
+    const idx = areaSelect.value;
+    locateMsg.textContent = '';
+    if (idx === ''){
+      locateMsg.textContent = 'Pick an area from the list first.';
+      return;
+    }
+    const area = AREAS[idx];
+    showResults(area.lat, area.lon, area.name);
+  }
+
+  function useGps(){
+    locateMsg.textContent = '';
+    if (!('geolocation' in navigator)){
+      locateMsg.textContent = "This view doesn't support live location — pick an area from the list above instead.";
+      return;
+    }
+    locateMsg.textContent = 'Requesting your location…';
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        locateMsg.textContent = '';
+        showResults(pos.coords.latitude, pos.coords.longitude, 'you');
+      },
+      () => {
+        locateMsg.textContent = "Couldn't get your location here — this chat preview usually blocks it. Pick an area from the list above, or open the downloaded file directly in your phone or desktop browser to try live location there.";
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+    );
+  }
+
+  goBtn.addEventListener('click', useArea);
+  gpsBtn.addEventListener('click', useGps);
+})();
+</script>
+
+</body>
+</html>
